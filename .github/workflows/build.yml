@@ -25,7 +25,7 @@ jobs:
 
     - name: Compile executable
       run: |
-        pyinstaller --noconsole --onefile cronometro.py
+        pyinstaller --noconsole --onefile main.py
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
