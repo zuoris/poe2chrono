@@ -15,7 +15,7 @@ class CronometroOverlay:
         # Dimensiones: empezamos en modo COMPACTO (alto 115)
         self.ancho = 240
         self.alto_compacto = 115
-        self.alto_expandido = 255
+        self.alto_expandido = 285
         self.root.geometry(f"{self.ancho}x{self.alto_compacto}+100+100")
         self.root.configure(bg="#1a1a1a")
 
@@ -86,6 +86,15 @@ class CronometroOverlay:
         self.lbl_total_val = tk.Label(f_total, text="--:--.--", font=("Consolas", 10, "bold"), fg="#e5c17b", bg="#111111", anchor="e")
         self.lbl_total_val.pack(side=tk.RIGHT)
 
+        # Botón para borrar los récords (dentro del panel desplegable)
+        self.btn_clear_records = tk.Button(
+            self.frame_floors, text="Clear Records", command=self.borrar_records,
+            bg="#3a1a1a", fg="#f87171", relief="flat", font=("Arial", 9, "bold"),
+            activebackground="#5a2a2a", activeforeground="white"
+        )
+        # Lo empaquetamos abajo del todo con un buen margen
+        self.btn_clear_records.pack(fill=tk.X, padx=15, pady=(10, 5))
+
         # Cargar los datos guardados en la interfaz visual
         self.actualizar_interfaz_records()
 
@@ -105,6 +114,19 @@ class CronometroOverlay:
 
     def guardar_records(self):
         with open(self.records_file, "w") as f: json.dump(self.records, f, indent=4)
+
+    def borrar_records(self):
+        # Restablecemos la estructura de datos a cero
+        self.records = {"floors": [None, None, None, None], "total": None}
+        
+        # Guardamos los datos vacíos en el archivo JSON para borrar el historial del disco
+        self.guardar_records()
+        
+        # Forzamos un reset completo del cronómetro actual para limpiar la pantalla
+        self.reset()
+        
+        # Actualizamos el indicador live para que vuelva a decir "First Run"
+        self.actualizar_label_live()
 
     def actualizar_interfaz_records(self):
         for i in range(4):

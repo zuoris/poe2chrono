@@ -22,4 +22,6 @@ Click Start button to start to track your times.
 Click Floor button when finish every floor.
 Click Pause button if you take a break, and do not forget to click Start again on return.
 
-Click + button to see your records.
+Click "+" button to see your records.
+
+Inside this panel also you can reset your records (all of them).
