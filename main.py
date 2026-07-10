@@ -5,6 +5,7 @@ import time
 import json
 import os
 import threading
+import ctypes
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGS Y LOGICA DE RUTAS
@@ -82,6 +83,8 @@ class CronometroOverlay:
         self.alto_expandido = 305
         self.root.geometry(f"{self.ancho}x{self.alto_compacto}+100+100")
         self.root.configure(bg="#1a1a1a")
+
+        self.forzar_icono_barra_tareas()
 
         # Fichero independiente para guardar récords de tiempo
         self.records_file = "zarokh_records.json"
@@ -356,6 +359,23 @@ class CronometroOverlay:
         x = self.root.winfo_x() + (event.x - self.x)
         y = self.root.winfo_y() + (event.y - self.y)
         self.root.geometry(f"+{x}+{y}")
+
+    def forzar_icono_barra_tareas(self):
+        """Aplica estilos nativos de Windows para mostrar la ventana en la barra de tareas."""
+        self.root.update_idletasks()
+        
+        hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, -20) # -20 es GWL_EXSTYLE
+        
+        # Modificamos los estilos de bits nativos
+        style = style & ~0x00000080  # Quita WS_EX_TOOLWINDOW
+        style = style | 0x00000040   # Añade WS_EX_APPWINDOW
+        
+        ctypes.windll.user32.SetWindowLongW(hwnd, -20, style)
+        
+        # Refrescar la ventana para que Windows entienda el cambio de estilo
+        self.root.wm_withdraw()
+        self.root.after(10, self.root.wm_deiconify)
 
 
 if __name__ == "__main__":
