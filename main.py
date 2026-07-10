@@ -78,8 +78,9 @@ class CronometroOverlay:
         # Set executable icon
         if getattr(sys, 'frozen', False):
             try:
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zarokh.tracker.v1")
-                self.root.iconbitmap(sys.executable)
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zarokh.tracker.v2")
+                icon_img = tk.PhotoImage(file=sys.executable)
+                self.root.iconphoto(True, icon_img)
             except:
                 pass
 
