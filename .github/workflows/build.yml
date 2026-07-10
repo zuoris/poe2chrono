@@ -30,7 +30,7 @@ jobs:
 
     - name: Compile executable
       run: |
-        pyinstaller --noconsole --onefile --name "zarokh" main.py
+        pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" main.py
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
