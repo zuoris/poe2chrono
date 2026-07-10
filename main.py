@@ -1,11 +1,13 @@
-import tkinter as tk
-from tkinter import filedialog
-import winreg
-import time
+import ctypes
 import json
 import os
+import sys
 import threading
-import ctypes
+import time
+import winreg
+
+import tkinter as tk
+from tkinter import filedialog
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGS Y LOGICA DE RUTAS
@@ -72,7 +74,15 @@ class CronometroOverlay:
     def __init__(self, root):
         self.root = root
         self.root.title("Zarokh - PoE2 Tracker")
-        
+
+        # Set executable icon
+        if getattr(sys, 'frozen', False):
+            try:
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zarokh.tracker.v1")
+                self.root.iconbitmap(sys.executable)
+            except:
+                pass
+
         # Ventana flotante siempre arriba y sin bordes
         self.root.attributes("-topmost", True)
         self.root.overrideredirect(True)
