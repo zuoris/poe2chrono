@@ -1,25 +1,71 @@
 import tkinter as tk
+from tkinter import filedialog
+import winreg
 import time
 import json
 import os
 import threading
 
 # ==============================================================================
-# CONFIGURACIÓN DE LOGS (Modifica esto si cambian las líneas en el futuro)
+# CONFIGURACIÓN DE LOGS Y LOGICA DE RUTAS
 # ==============================================================================
 LOG_CONFIG = {
-    # Pon aquí la ruta real a tu Client.txt (puedes usar la de Steam o Standalone)
-    "FILE_PATH": r"C:\Program Files (x86)\Steam\steamapps\common\Path of Exile 2\logs\Client.txt",
-    
-    # Mensajes exactos que buscará el programa en el archivo log
     "TRIGGERS": {
-        "START":   'area "Sanctum_1_Foyer',  # Carga del Piso 1 -> Arranca el crono
-        "FLOOR_2": 'area "Sanctum_2_Foyer',  # Carga del Piso 2 -> Siguiente piso
-        "FLOOR_3": 'area "Sanctum_3_Foyer',  # Carga del Piso 3 -> Siguiente piso
-        "FLOOR_4": 'area "Sanctum_4_Foyer',  # Carga del Piso 4 -> Siguiente piso
-        "END":     'Zarokh, the Temporal: Ugh... a temporary setback!'   # Carga de la Arena Final / Muerte de Zarokh -> Stop total
+        "START":   'area "Sanctum_1_Foyer',
+        "FLOOR_2": 'area "Sanctum_2_Foyer',
+        "FLOOR_3": 'area "Sanctum_3_Foyer',
+        "FLOOR_4": 'area "Sanctum_4_Foyer',
+        "END":     'Zarokh, the Temporal: Ugh...'
     }
 }
+
+CONFIG_FILE = "zarokh_config.json"
+
+def cargar_config_app():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def guardar_config_app(config_data):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config_data, f, indent=4)
+
+def obtener_ruta_log():
+    config = cargar_config_app()
+
+    # Capa 1: Ver si ya está guardada en la configuración propia
+    if "client_txt_path" in config and os.path.exists(config["client_txt_path"]):
+        return config["client_txt_path"]
+
+    # Capa 2: Rutas por defecto comunes
+    rutas_defecto = [
+        r"C:\Program Files (x86)\Steam\steamapps\common\Path of Exile 2\logs\Client.txt",
+        r"C:\Program Files (x86)\Grinding Gear Games\Path of Exile 2\logs\Client.txt"
+    ]
+    for ruta in rutas_defecto:
+        if os.path.exists(ruta):
+            config["client_txt_path"] = ruta
+            guardar_config_app(config)
+            return ruta
+
+    # Capa 3: Registro de Windows (Standalone)
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Grinding Gear Games\Path of Exile 2") as key:
+            install_path = winreg.QueryValueEx(key, "InstallLocation")[0]
+            ruta_registro = os.path.join(install_path, "logs", "Client.txt")
+            if os.path.exists(ruta_registro):
+                config["client_txt_path"] = ruta_registro
+                guardar_config_app(config)
+                return ruta_registro
+    except:
+        pass
+
+    return None
+
 
 class CronometroOverlay:
     def __init__(self, root):
@@ -32,14 +78,17 @@ class CronometroOverlay:
         
         # Dimensiones de la interfaz
         self.ancho = 240
-        self.alto_compacto = 115
-        self.alto_expandido = 285
+        self.alto_compacto = 135
+        self.alto_expandido = 305
         self.root.geometry(f"{self.ancho}x{self.alto_compacto}+100+100")
         self.root.configure(bg="#1a1a1a")
 
-        # Fichero y carga de récords
-        self.records_file = "sekhemas_records.json"
+        # Fichero independiente para guardar récords de tiempo
+        self.records_file = "zarokh_records.json"
         self.records = self.cargar_records()
+
+        # Intentar obtener la ruta del Client.txt mediante configuración o auto-detección
+        self.client_txt_path = obtener_ruta_log()
 
         # Control del estado del cronómetro
         self.running = False
@@ -57,7 +106,14 @@ class CronometroOverlay:
         self.label_tiempo.pack(pady=(8, 0))
 
         self.label_delta_live = tk.Label(root, text="Waiting for Sekhemas...", font=("Consolas", 10), fg="#888888", bg="#1a1a1a")
-        self.label_delta_live.pack(pady=(0, 5))
+        self.label_delta_live.pack(pady=(0, 2))
+
+        # Indicador de Modo en la pantalla principal (Pasa a verde si está en auto, interactivo si es manual)
+        self.btn_modo_status = tk.Button(
+            root, text="", command=self.activar_modo_auto_manual,
+            relief="flat", font=("Arial", 7, "bold"), bd=0, cursor="hand2"
+        )
+        self.btn_modo_status.pack(pady=(0, 5))
 
         frame_botones = tk.Frame(root, bg="#1a1a1a")
         frame_botones.pack(pady=2)
@@ -74,7 +130,7 @@ class CronometroOverlay:
         self.btn_panel = tk.Button(frame_botones, text="+", command=self.toggle_panel, bg="#333333", fg="#e5c17b", relief="flat", width=2, font=("Arial", 9, "bold"))
         self.btn_panel.pack(side=tk.LEFT, padx=2)
 
-        # --- PANEL DESPLEGABLE ---
+        # --- PANEL DESPLEGABLE (RÉCORDS) ---
         self.frame_floors = tk.Frame(root, bg="#111111")
         
         self.labels_pisos = []
@@ -98,42 +154,37 @@ class CronometroOverlay:
         self.btn_clear_records.pack(fill=tk.X, padx=15, pady=(10, 5))
 
         self.actualizar_interfaz_records()
+        self.actualizar_indicador_pantalla_principal()
 
-        # Eventos de arrastre y cierre
+        # Eventos para poder arrastrar la ventana sin bordes
         for widget in [root, self.label_tiempo, self.label_delta_live]:
             widget.bind("<ButtonPress-1>", self.iniciar_movimiento)
             widget.bind("<B1-Motion>", self.mover_ventana)
         root.bind("<Escape>", lambda e: root.destroy())
 
-        # --- INICIAR LECTOR AUTOMÁTICO DE LOGS ---
+        # --- INICIALIZACIÓN DEL HILO (Solo si existe el fichero) ---
         self.stop_log_trigger = threading.Event()
+        if self.client_txt_path:
+            self.iniciar_hilo_lectura()
+
+    def iniciar_hilo_lectura(self):
         self.log_thread = threading.Thread(target=self.escuchar_client_log, daemon=True)
         self.log_thread.start()
 
-    # --- Lógica del Lector de Logs (Tailing) ---
     def escuchar_client_log(self):
-        ruta_log = LOG_CONFIG["FILE_PATH"]
+        ruta_log = self.client_txt_path
         
-        # Si el archivo no existe en la ruta configurada, reintenta en bucle discreto
-        while not os.path.exists(ruta_log):
-            time.sleep(5)
-            if self.stop_log_trigger.is_set(): return
-
-        # Abrimos el archivo y nos vamos al final absoluto del mismo (para no leer logs viejos)
         with open(ruta_log, "r", encoding="utf-8", errors="ignore") as f:
             f.seek(0, os.SEEK_END)
             
             while not self.stop_log_trigger.is_set():
                 linea = f.readline()
                 if not linea:
-                    time.sleep(0.1) # Si no hay líneas nuevas, espera un instante
+                    time.sleep(0.1)
                     continue
                 
-                # Analizar la línea detectada
                 triggers = LOG_CONFIG["TRIGGERS"]
-                
                 if triggers["START"] in linea:
-                    # Usamos root.after para ejecutar de forma segura funciones visuales desde el hilo secundario
                     self.root.after(0, self.auto_start)
                 elif triggers["FLOOR_2"] in linea and self.current_floor == 1:
                     self.root.after(0, self.registrar_piso)
@@ -153,7 +204,33 @@ class CronometroOverlay:
             self.btn_floor.config(state=tk.NORMAL)
             self.actualizar_reloj()
 
-    # --- Lógica de Récords y Tiempos (Igual que antes) ---
+    def actualizar_indicador_pantalla_principal(self):
+        if self.client_txt_path:
+            self.btn_modo_status.config(
+                text="● AUTO MODE", fg="#4ade80", bg="#1a1a1a", 
+                activebackground="#1a1a1a", activeforeground="#4ade80", state=tk.DISABLED
+            )
+        else:
+            self.btn_modo_status.config(
+                text="○ MANUAL MODE (Click to link PoE2)", fg="#a3a3a3", bg="#1a1a1a",
+                activebackground="#1a1a1a", activeforeground="white", state=tk.NORMAL
+            )
+
+    def activar_modo_auto_manual(self):
+        archivo_seleccionado = filedialog.askopenfilename(
+            title="Zarokh: Select your Client.txt to enable Auto Mode",
+            filetypes=[("Text Files", "Client.txt"), ("All Files", "*.*")]
+        )
+        if archivo_seleccionado and os.path.exists(archivo_seleccionado):
+            self.client_txt_path = archivo_seleccionado
+            
+            config = cargar_config_app()
+            config["client_txt_path"] = archivo_seleccionado
+            guardar_config_app(config)
+            
+            self.actualizar_indicador_pantalla_principal()
+            self.iniciar_hilo_lectura()
+
     def cargar_records(self):
         if os.path.exists(self.records_file):
             try:
@@ -212,7 +289,7 @@ class CronometroOverlay:
                     delta = (actual - tiempo_anterior) - record_piso
                     signo = "-" if delta < 0 else "+"
                     color = "#4ade80" if delta < 0 else "#f87171"
-                    self.label_tiempo.config(fg=color) # Cambia el color del crono entero según vas en el piso
+                    self.label_tiempo.config(fg=color)
                     self.label_delta_live.config(text=f"Floor {self.current_floor} | {signo}{abs(delta):.1f}s", fg=color)
             self.root.after(50, self.actualizar_reloj)
 
@@ -243,7 +320,7 @@ class CronometroOverlay:
             self.records["floors"][self.current_floor - 1] = tiempo_del_piso
 
         self.current_floor += 1
-        self.label_tiempo.config(fg="#e5c17b") # Reseteamos a dorado al cambiar de piso
+        self.label_tiempo.config(fg="#e5c17b")
         self.actualizar_label_live()
         self.actualizar_interfaz_records()
 
@@ -279,6 +356,7 @@ class CronometroOverlay:
         x = self.root.winfo_x() + (event.x - self.x)
         y = self.root.winfo_y() + (event.y - self.y)
         self.root.geometry(f"+{x}+{y}")
+
 
 if __name__ == "__main__":
     root = tk.Tk()

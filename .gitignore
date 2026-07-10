@@ -8,4 +8,5 @@ __pycache__/
 *.pyc
 
 # local records
-sekhemas_records.json
+zarokh_records.json
+zarokh_config.json
