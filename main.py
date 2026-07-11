@@ -78,8 +78,14 @@ class CronometroOverlay:
         # Set executable icon
         if getattr(sys, 'frozen', False):
             try:
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zarokh.tracker.v2")
-                icon_img = tk.PhotoImage(file=sys.executable)
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zarokh.tracker.v3")
+                
+                # Obtenemos la ruta de la carpeta temporal donde PyInstaller descomprime los archivos
+                base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+                icon_path = os.path.join(base_path, 'assets', 'images', 'zarokh.png') 
+                
+                # Pasamos la ruta del archivo real
+                icon_img = tk.PhotoImage(file=icon_path)
                 self.root.iconphoto(True, icon_img)
             except:
                 pass
