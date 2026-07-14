@@ -28,7 +28,7 @@ Thumbs.db
 htmlcov/
 
 # Logs
-*.log
+zarokh.log*
 logs/
 
 # local records

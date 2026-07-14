@@ -3,12 +3,12 @@ Tkinter UI for the Zarokh Sanctum timer overlay. This module only
 handles widgets and rendering — all state and business logic lives
 in AppController, RunTimer, and RecordsManager.
 """
+import logging
 import sys
-from pathlib import Path
-from typing import Callable
-
 import tkinter as tk
+from pathlib import Path
 from tkinter import filedialog
+from typing import Callable
 
 from zarokh.app_controller import AppController
 from zarokh.windows_utils import (
@@ -17,6 +17,8 @@ from zarokh.windows_utils import (
     resolve_icon_path,
     set_app_user_model_id,
 )
+
+logger = logging.getLogger(__name__)
 
 TOTAL_FLOORS = 4
 
@@ -33,7 +35,7 @@ class CronometroOverlay:
         controller: AppController,
         auto_mode: bool,
         on_manual_path_selected: Callable[[str], None] | None = None,
-    ):
+    ) -> None:
         self.root = root
         self.controller = controller
         self.auto_mode = auto_mode
@@ -73,8 +75,8 @@ class CronometroOverlay:
         try:
             icon_img = tk.PhotoImage(file=str(icon_path))
             self.root.iconphoto(True, icon_img)
-        except tk.TclError:
-            pass
+        except tk.TclError as e:
+            logger.warning("Could not load app icon from %s: %s", icon_path, e)
 
     def _force_taskbar_icon(self) -> None:
         self.root.update_idletasks()
@@ -136,7 +138,7 @@ class CronometroOverlay:
         self.btn_panel.pack(side=tk.LEFT, padx=2)
 
         self.frame_floors = tk.Frame(self.root, bg="#111111")
-        self.labels_pisos = []
+        self.labels_pisos: list[tk.Label] = []
         for i in range(TOTAL_FLOORS):
             f = tk.Frame(self.frame_floors, bg="#111111")
             f.pack(fill=tk.X, padx=15, pady=2)
@@ -314,11 +316,11 @@ class CronometroOverlay:
     # Window dragging
     # ------------------------------------------------------------------
 
-    def _start_drag(self, event) -> None:
+    def _start_drag(self, event: tk.Event) -> None:
         self._drag_x = event.x
         self._drag_y = event.y
 
-    def _on_drag(self, event) -> None:
+    def _on_drag(self, event: tk.Event) -> None:
         x = self.root.winfo_x() + (event.x - self._drag_x)
         y = self.root.winfo_y() + (event.y - self._drag_y)
         self.root.geometry(f"+{x}+{y}")

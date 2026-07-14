@@ -2,6 +2,11 @@
 Application entry point. Wires together ConfigManager, RecordsManager,
 RunTimer, AppController, LogWatcher, and the Tkinter UI.
 """
+import logging
+import logging.handlers
+import sys
+from pathlib import Path
+
 import tkinter as tk
 
 from zarokh.app_controller import AppController
@@ -13,7 +18,37 @@ from zarokh.timer import RunTimer
 from zarokh.ui.overlay import CronometroOverlay
 
 
+def setup_logging() -> None:
+    """
+    Configures logging once, at startup. Writes to a file next to
+    the executable (or the script, in dev), rotating daily and
+    keeping only the last 24 hours of logs.
+    """
+    if getattr(sys, "frozen", False):
+        log_dir = Path(sys.executable).parent
+    else:
+        log_dir = Path(__file__).resolve().parents[2]
+
+    log_file = log_dir / "zarokh.log"
+
+    handler = logging.handlers.TimedRotatingFileHandler(
+        log_file,
+        when="midnight",
+        backupCount=1,
+        encoding="utf-8",
+    )
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[handler],
+    )
+
+
 def main() -> None:
+    setup_logging()
+    logging.getLogger(__name__).info("Zarokh starting up")
+
     config = ConfigManager()
     records = RecordsManager()
     timer = RunTimer()
