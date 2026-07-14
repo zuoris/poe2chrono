@@ -82,8 +82,10 @@ are logged with context instead of failing silently.
 ## Releasing
 
 Releases are triggered by pushing a tag matching `v*` (e.g. `v1.2.0`),
-following [semantic versioning](https://semver.org/). Pushing such a tag
-runs the GitHub Actions workflow (`.github/workflows/build.yml`), which:
+following [semantic versioning](https://semver.org/). The version number
+is derived automatically from the git tag via `setuptools_scm` — there's
+no need to edit `pyproject.toml` manually. Pushing such a tag runs the
+GitHub Actions workflow (`.github/workflows/build.yml`), which:
 
 1. Runs the full test suite — the build is blocked if any test fails.
 2. Compiles `zarokh.exe` with PyInstaller.

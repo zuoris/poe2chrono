@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure Python
         uses: actions/setup-python@v5
@@ -37,6 +39,8 @@ jobs:
     steps:
     - name: Code checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Configure Python
       uses: actions/setup-python@v5

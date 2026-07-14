@@ -1,6 +1,6 @@
 [project]
 name = "zarokh"
-version = "1.0.12"
+dynamic = ["version"]
 requires-python = ">=3.11"
 dependencies = []
 
@@ -13,8 +13,10 @@ dev = [
 pythonpath = ["src"]
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
