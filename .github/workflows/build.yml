@@ -51,7 +51,7 @@ jobs:
 
     - name: Compile executable
       run: |
-        pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" --paths src src/zarokh/__main__.py
+        pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" --paths src --add-data "assets;assets" src/zarokh/__main__.py
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
