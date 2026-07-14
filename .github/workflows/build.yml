@@ -53,6 +53,17 @@ jobs:
       run: |
         pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" --paths src --add-data "assets;assets" src/zarokh/__main__.py
 
+    - name: Smoke test
+      run: |
+        Start-Process -FilePath "dist\zarokh.exe"
+        Start-Sleep -Seconds 3
+        $process = Get-Process zarokh -ErrorAction SilentlyContinue
+        if (-not $process) {
+          Write-Error "zarokh.exe did not stay running — smoke test failed"
+          exit 1
+        }
+        Stop-Process -Name zarokh
+
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
