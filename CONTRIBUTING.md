@@ -1,0 +1,107 @@
+# Contributing to Zarokh
+
+Thanks for your interest in contributing! This document covers everything
+you need to set up your environment, understand the project structure,
+and submit changes.
+
+## Requirements
+
+- Python 3.11 or higher
+- Windows 10/11 (the app relies on Windows-specific APIs: `winreg`, `ctypes`)
+- [VSCode](https://code.visualstudio.com/) (recommended, not required)
+
+## Setting up your environment
+
+1. Clone the repository and open it in your favourite editor.
+2. Create a virtual environment.
+3. Install the dev dependencies:
+
+```powershell
+   pip install pytest
+```
+
+The project doesn't need to be installed as a package to run or test it —
+`pyproject.toml` adds `src/` to the Python path automatically for both
+`pytest` and normal execution.
+
+## Running the app locally
+
+```powershell
+python -m zarokh
+```
+
+(Requires a `.env` file in the project root with `PYTHONPATH=src`, or an
+equivalent setup in your editor/IDE of choice — see below.)
+
+### Running/debugging in VSCode
+
+Create a `.env` file in the project root:
+
+```
+PYTHONPATH=src
+```
+
+VSCode's Python extension picks this up automatically for both the Run
+button and the debugger, resolving `from zarokh.timer import ...` without
+installing the package. With this in place, you can also open
+`src/zarokh/__main__.py` and press F5 directly.
+
+## Running tests
+
+```powershell
+pytest
+```
+
+Tests live in `tests/`, one file per module (`test_timer.py`,
+`test_config.py`, etc.), using pytest's `tmp_path` fixture to avoid
+touching real files, and `unittest.mock` to isolate calls to the Windows
+registry (`winreg`) and other OS-level APIs.
+
+The CI pipeline runs the full suite on every tagged push before
+compiling — see [Releasing](#releasing) below.
+
+## Building the executable locally
+
+To test a PyInstaller build without publishing a release:
+
+```powershell
+pip install pyinstaller
+pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" --paths src --add-data "assets;assets" src/zarokh/__main__.py
+```
+
+The executable will be at `dist/zarokh.exe`. `build/` and `dist/` are
+gitignored — no need to clean them up manually.
+
+## Logging
+
+The app writes `zarokh.log` next to the executable (or in the project
+root during development), rotating daily and keeping the previous day's
+log. If you're debugging an issue, check this file first — most errors
+are logged with context instead of failing silently.
+
+## Releasing
+
+Releases are triggered by pushing a tag matching `v*` (e.g. `v1.2.0`),
+following [semantic versioning](https://semver.org/). Pushing such a tag
+runs the GitHub Actions workflow (`.github/workflows/build.yml`), which:
+
+1. Runs the full test suite — the build is blocked if any test fails.
+2. Compiles `zarokh.exe` with PyInstaller.
+3. Runs a smoke test to confirm the executable starts correctly.
+4. Publishes a GitHub Release with the executable attached.
+
+```powershell
+git tag v1.2.0
+git push --tags
+```
+
+GitHub automatically computes and displays a SHA256 checksum for the
+published `.exe`, so there's no need to generate one manually.
+
+## Code style
+
+- Code, comments, and commit messages are written in English.
+- Type hints are expected on new functions and methods.
+- Keep exceptions narrow (`except (OSError, json.JSONDecodeError)`, not
+  bare `except:`), and log unexpected failures instead of silently
+  swallowing them.

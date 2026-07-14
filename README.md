@@ -1,4 +1,4 @@
-# Zarokh: The Shekemas Speedrun Tracker
+# Zarokh: The Sekhemas Speedrun Tracker
 
 This tool is called Zarokh in honor to the boss you are killing again and again :)
 
@@ -22,6 +22,7 @@ Doble click on zarokh.exe.
 This will create some files in the same place where the executable is located:
 - "zarokh_records.json" to store your record. When start the first Sekhemas run.
 - "zarokh_config.json" to store your configuration. When executable starts at the first time.
+- "zarokh.log" with diagnostic information about the app's execution. Useful if you run into an issue and want to report it.
 
 
 ## Using
@@ -40,3 +41,8 @@ To help tracking manually there are some buttons:
 
 There is a hidden panel you can display on clicking "+" button.
 This panel has information about your records and also you can reset your records clicking on "Clear records" button (WARNING! you will remove the information from the "zarokh_records.json" file).
+
+
+## Contributing
+
+Interested in contributing to Zarokh? Check out [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, project structure, and how to run tests.
