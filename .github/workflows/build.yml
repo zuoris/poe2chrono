@@ -15,6 +15,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify CHANGELOG entry exists
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $pattern = "## \[$([regex]::Escape($version))\]"
+          $found = Select-String -Path "CHANGELOG.md" -Pattern $pattern -Quiet
+          if (-not $found) {
+            Write-Error "No CHANGELOG.md entry found for version $version. Add a '## [$version]' section to CHANGELOG.md before tagging a release."
+            exit 1
+          }
+          Write-Host "Found CHANGELOG.md entry for version $version"
+
       - name: Configure Python
         uses: actions/setup-python@v5
         with:

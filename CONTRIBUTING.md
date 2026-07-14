@@ -81,16 +81,22 @@ are logged with context instead of failing silently.
 
 ## Releasing
 
+Before tagging a release, add an entry to `CHANGELOG.md` under a new
+`## [X.Y.Z]` heading, following [Keep a Changelog](https://keepachangelog.com/)
+conventions. The CI pipeline verifies this entry exists and fails fast
+if it's missing.
+
 Releases are triggered by pushing a tag matching `v*` (e.g. `v1.2.0`),
 following [semantic versioning](https://semver.org/). The version number
 is derived automatically from the git tag via `setuptools_scm` — there's
 no need to edit `pyproject.toml` manually. Pushing such a tag runs the
 GitHub Actions workflow (`.github/workflows/build.yml`), which:
 
-1. Runs the full test suite — the build is blocked if any test fails.
-2. Compiles `zarokh.exe` with PyInstaller.
-3. Runs a smoke test to confirm the executable starts correctly.
-4. Publishes a GitHub Release with the executable attached.
+1. Verifies a matching CHANGELOG.md entry exists.
+2. Runs the full test suite — the build is blocked if any test fails.
+3. Compiles `zarokh.exe` with PyInstaller.
+4. Runs a smoke test to confirm the executable starts correctly.
+5. Publishes a GitHub Release with the executable attached.
 
 ```powershell
 git tag v1.2.0
