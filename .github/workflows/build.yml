@@ -7,14 +7,33 @@ on:
   workflow_dispatch:
 
 jobs:
- 
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run tests
+        run: pytest
 
   build:
+    needs: test
     runs-on: windows-latest
 
     permissions:
         contents: write
-        
+
     steps:
     - name: Code checkout
       uses: actions/checkout@v4
@@ -23,6 +42,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
@@ -31,7 +51,7 @@ jobs:
 
     - name: Compile executable
       run: |
-        pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" main.py
+        pyinstaller --noconsole --onefile --name "zarokh" --icon "assets/images/zarokh.ico" --paths src src/zarokh/__main__.py
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
