@@ -100,7 +100,7 @@ class RunTimer:
 
         self.current_floor += 1
         if self.is_finished:
-            self.running = False
+            self.pause()
 
         return result
 
