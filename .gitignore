@@ -34,3 +34,5 @@ logs/
 # local records
 zarokh_records.json
 zarokh_config.json
+
+pending.md
