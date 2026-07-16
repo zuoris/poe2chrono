@@ -7,7 +7,7 @@ So Zarokh allows you to track the time you last to kill Zarokh.
 | Operating System | Compatibility |
 |------------------|---------------|
 | Windows 10 | YES |
-| Windows 11 | ? |
+| Windows 11 | YES |
 | Linux | No |
 | MacOS | No |
 
@@ -18,6 +18,11 @@ Just download the last release of zarokh.exe file from the repository.
 ## Running
 
 Doble click on zarokh.exe.
+
+Zarokh will try to locate your "Client.txt" file (PoE2's log file)
+automatically. If it can't find it, it will ask you to locate it
+yourself — this is required, the app keeps asking until you provide
+a valid path.
 
 This will create some files in the same place where the executable is located:
 - "zarokh_records.json" to store your record. When start the first Sekhemas run.
@@ -31,13 +36,21 @@ This tool is extremly simple.
 
 You can move the window wherever you want to see the clock.
 
-If "Client.txt" file is found it tracks the run automatically
-else you has to track it manually.
+The run is tracked automatically as you play — the app watches your
+"Client.txt" file and reacts to it.
 
-To help tracking manually there are some buttons:
-- Click Start button to start to track your times. On tracking this button change to Pause.
-- Click Pause button if you want to take a break. On pause this button change to Start.
-- Click Floor button when finish every floor (I recommend click on it when you are passing the portal).
+There are two small buttons to control the current run:
+- **Pause/Restart** (⏸/▶): pauses the clock, or resumes it from where
+  it left off. Hover over it to see which action it will perform.
+- **Cancel** (✕): abandons the current run — the clock stops and no
+  record is saved for it. Hover over it for confirmation.
+
+Both buttons are disabled until you actually start a run (enter the
+first floor of Sekhemas).
+
+If you pause the clock and then clear a floor without resuming first,
+the app assumes you forgot to hit Restart — the run is discarded
+automatically, the same as clicking Cancel.
 
 There is a hidden panel you can display on clicking "+" button.
 This panel has information about your records and also you can reset your records clicking on "Clear records" button (WARNING! you will remove the information from the "zarokh_records.json" file).

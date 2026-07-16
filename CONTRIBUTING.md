@@ -79,6 +79,22 @@ root during development), rotating daily and keeping the previous day's
 log. If you're debugging an issue, check this file first — most errors
 are logged with context instead of failing silently.
 
+## Implementing a roadmap item
+
+When you finish implementing a roadmap item, update documentation as
+part of the same change — not as an afterthought:
+
+1. Update the item's detail doc under `docs/roadmap/`: set `Status`
+   to `Done` and add a line to its `Status log`, noting anything that
+   ended up different from the original design.
+2. Update `ROADMAP.md`: mark the item's status in the table.
+3. Update `README.md` if the change affects user-facing behavior
+   (new/changed buttons, new files the app creates, changed
+   requirements, etc.) — it should always describe the app as it
+   currently behaves, not as it behaved before the change.
+4. Add an entry to `CHANGELOG.md` under `## [Unreleased]` (see
+   [Releasing](#releasing) below).
+
 ## Releasing
 
 Before tagging a release, add an entry to `CHANGELOG.md` under a new
