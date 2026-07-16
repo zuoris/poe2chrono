@@ -23,9 +23,23 @@ further thought and isn't blocking the items above.
 
 | Priority | # | Feature | Status |
 |----------|---|---------|--------|
-| 1 | 002 | [Simplified auto-mode UI](docs/roadmap/002-simplified-auto-mode-ui.md) | Designed |
+| 1 | 002 | [Simplified auto-mode UI](docs/roadmap/002-simplified-auto-mode-ui.md) | Done |
 | 2 | 003 | [Detailed time and delta display](docs/roadmap/003-detailed-time-display.md) | Proposed |
 | 3 | 004 | [Full run history](docs/roadmap/004-full-run-history.md) | Proposed |
 | 4 | 001 | [Run attempt counter](docs/roadmap/001-run-attempt-counter.md) | Proposed |
 | 5 | 005 | [Unique relic tracking per run](docs/roadmap/005-unique-relic-tracking.md) | Proposed |
 | — | 006 | [Abandoned and interrupted runs](docs/roadmap/006-abandoned-interrupted-runs.md) | Proposed |
+
+
+## Pendiente:
+
+Quiero hacer que se guarde el estado entre ejecuciones.
+Vamos a tener que cambiar zarokh_records.json para que sea zarokh_data.json
+y guardar ahi toda la información.
+
+Es necesario guardar el estado de la aplicación por si salimos y queremos retomar el run de nuevo.
+
+Como no guardamos el estado puede ocurrir que al salir del programa perdamos el estado.
+Si salimos de forma inesperada no podemos hacer gran cosa, pero si lo hacemos de forma controlada
+deberiamos poder recuperar el estado.
+Seria necesario varias cosas. Al salir poner un mensaje de confirmación y si se vuelve a pulsar el ESC que vuelva al programa, de manera que se quede en un bucle.

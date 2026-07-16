@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Versions prior to 1.0.14 were not documented in this file.
 
+## [1.0.15] - 2026-07-14
+
+### Changed
+- Simplified the UI to automatic-mode-only tracking: manual mode
+  (Start/Floor/Reset) removed, replaced by Pause/Restart and Cancel
+  icon buttons.
+- A floor completed while the timer is paused now silently cancels
+  the run instead of registering a stale record — the app assumes
+  the user forgot to resume.
+
+### Added
+- Integration tests covering AppController scenarios and the
+  Tkinter UI's real widget state.
+
 ## [1.0.14] - 2026-07-14
 
 ### Added

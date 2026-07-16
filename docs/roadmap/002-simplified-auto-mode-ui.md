@@ -97,3 +97,6 @@ automatic detection of abandonment.
 - 2026-07-14: Refined — manual mode removed entirely; Cancel and Reset
   reconciled (Cancel is the only reset mechanism now); abandoned/
   interrupted runs split out into a new backlog item (006).
+- 2026-07-14: Implemented. Final design ended up simpler than
+  originally specified: only two Run states (IDLE, RUNNING); pause
+  is a derived property, not a state. Manual mode fully removed.
