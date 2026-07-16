@@ -1,16 +1,15 @@
 """
 Tkinter UI for the Zarokh Sanctum timer overlay. This module only
 handles widgets and rendering — all state and business logic lives
-in AppController, RunTimer, and RecordsManager.
+in AppController, Run, and RecordsManager.
 """
 import logging
 import sys
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog
-from typing import Callable
 
 from zarokh.app_controller import AppController
+from zarokh.run import TOTAL_FLOORS, RunState
 from zarokh.windows_utils import (
     force_taskbar_icon,
     get_window_handle,
@@ -20,26 +19,49 @@ from zarokh.windows_utils import (
 
 logger = logging.getLogger(__name__)
 
-TOTAL_FLOORS = 4
-
 
 def format_time(seconds: float) -> str:
     """Formats a duration in seconds as MM:SS.CC."""
     return f"{int(seconds // 60):02d}:{int(seconds % 60):02d}.{int((seconds % 1) * 100):02d}"
 
 
+class _Tooltip:
+    """Minimal hover tooltip — Tkinter has no built-in equivalent."""
+
+    def __init__(self, widget: tk.Widget, text: str) -> None:
+        self.widget = widget
+        self.text = text
+        self._tipwindow: tk.Toplevel | None = None
+        widget.bind("<Enter>", self._show)
+        widget.bind("<Leave>", self._hide)
+
+    def update_text(self, text: str) -> None:
+        self.text = text
+
+    def _show(self, event: tk.Event | None = None) -> None:
+        if self._tipwindow is not None:
+            return
+        x = self.widget.winfo_rootx() + 10
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        self._tipwindow = tk.Toplevel(self.widget)
+        self._tipwindow.wm_overrideredirect(True)
+        self._tipwindow.wm_geometry(f"+{x}+{y}")
+        tk.Label(
+            self._tipwindow, text=self.text, background="#222222", foreground="white",
+            relief="solid", borderwidth=1, font=("Arial", 8), padx=4, pady=2,
+        ).pack()
+
+    def _hide(self, event: tk.Event | None = None) -> None:
+        if self._tipwindow is not None:
+            self._tipwindow.destroy()
+            self._tipwindow = None
+
+
 class CronometroOverlay:
-    def __init__(
-        self,
-        root: tk.Tk,
-        controller: AppController,
-        auto_mode: bool,
-        on_manual_path_selected: Callable[[str], None] | None = None,
-    ) -> None:
+    def __init__(self, root: tk.Tk, controller: AppController) -> None:
         self.root = root
         self.controller = controller
-        self.auto_mode = auto_mode
-        self.on_manual_path_selected = on_manual_path_selected
+        self._ticking = False
 
         self.root.title("Zarokh - PoE2 Tracker")
         self._setup_window_icon()
@@ -102,51 +124,42 @@ class CronometroOverlay:
             self.root, text="Waiting for Sekhemas...", font=("Consolas", 10),
             fg="#888888", bg="#1a1a1a",
         )
-        self.label_delta_live.pack(pady=(0, 2))
-
-        self.btn_modo_status = tk.Button(
-            self.root, text="", command=self._on_click_modo_status,
-            relief="flat", font=("Arial", 7, "bold"), bd=0, cursor="hand2",
-        )
-        self.btn_modo_status.pack(pady=(0, 5))
+        self.label_delta_live.pack(pady=(0, 5))
 
         frame_botones = tk.Frame(self.root, bg="#1a1a1a")
         frame_botones.pack(pady=2)
 
-        self.btn_toggle = tk.Button(
-            frame_botones, text="Start", command=self._on_click_toggle,
-            bg="#2a2a2a", fg="white", relief="flat", width=6,
+        self.btn_pause_restart = tk.Button(
+            frame_botones, text="⏸", command=self._on_click_pause_restart,
+            bg="#2a2a2a", fg="white", relief="flat", width=3,
+            font=("Arial", 11), state=tk.DISABLED,
         )
-        self.btn_toggle.pack(side=tk.LEFT, padx=2)
+        self.btn_pause_restart.pack(side=tk.LEFT, padx=4)
+        self._pause_tooltip = _Tooltip(self.btn_pause_restart, "Pause")
 
-        self.btn_floor = tk.Button(
-            frame_botones, text="Floor", command=self._on_click_floor,
-            bg="#2a2a2a", fg="white", relief="flat", width=6, state=tk.DISABLED,
+        self.btn_cancel = tk.Button(
+            frame_botones, text="✕", command=self._on_click_cancel,
+            bg="#2a2a2a", fg="#f87171", relief="flat", width=3,
+            font=("Arial", 11), state=tk.DISABLED,
         )
-        self.btn_floor.pack(side=tk.LEFT, padx=2)
-
-        self.btn_reset = tk.Button(
-            frame_botones, text="Reset", command=self._on_click_reset,
-            bg="#2a2a2a", fg="white", relief="flat", width=6,
-        )
-        self.btn_reset.pack(side=tk.LEFT, padx=2)
+        self.btn_cancel.pack(side=tk.LEFT, padx=4)
+        _Tooltip(self.btn_cancel, "Cancel")
 
         self.btn_panel = tk.Button(
             frame_botones, text="+", command=self._on_click_toggle_panel,
             bg="#333333", fg="#e5c17b", relief="flat", width=2, font=("Arial", 9, "bold"),
         )
-        self.btn_panel.pack(side=tk.LEFT, padx=2)
+        self.btn_panel.pack(side=tk.LEFT, padx=4)
 
         self.frame_floors = tk.Frame(self.root, bg="#111111")
         self.labels_pisos: list[tk.Label] = []
         for i in range(TOTAL_FLOORS):
             f = tk.Frame(self.frame_floors, bg="#111111")
             f.pack(fill=tk.X, padx=15, pady=2)
-            lbl_name = tk.Label(
+            tk.Label(
                 f, text=f"Floor {i + 1} Best:", font=("Consolas", 10),
                 fg="#777777", bg="#111111", anchor="w",
-            )
-            lbl_name.pack(side=tk.LEFT)
+            ).pack(side=tk.LEFT)
             lbl_val = tk.Label(
                 f, text="--:--.--", font=("Consolas", 10),
                 fg="#bbbbbb", bg="#111111", anchor="e",
@@ -156,11 +169,10 @@ class CronometroOverlay:
 
         f_total = tk.Frame(self.frame_floors, bg="#111111")
         f_total.pack(fill=tk.X, padx=15, pady=(5, 2))
-        lbl_t_name = tk.Label(
+        tk.Label(
             f_total, text="PB Total Time:", font=("Consolas", 10, "bold"),
             fg="#888888", bg="#111111", anchor="w",
-        )
-        lbl_t_name.pack(side=tk.LEFT)
+        ).pack(side=tk.LEFT)
         self.lbl_total_val = tk.Label(
             f_total, text="--:--.--", font=("Consolas", 10, "bold"),
             fg="#e5c17b", bg="#111111", anchor="e",
@@ -184,23 +196,18 @@ class CronometroOverlay:
     # Button callbacks — all delegate to AppController, never compute
     # ------------------------------------------------------------------
 
-    def _on_click_toggle(self) -> None:
-        self.controller.toggle()
+    def _on_click_pause_restart(self) -> None:
+        self.controller.toggle_pause()
         self.refresh_all()
-        if self.controller.timer.running:
-            self._tick()
+        self._ensure_ticking()
 
-    def _on_click_floor(self) -> None:
-        self.controller.register_floor()
-        self.refresh_all()
-
-    def _on_click_reset(self) -> None:
-        self.controller.reset()
+    def _on_click_cancel(self) -> None:
+        self.controller.cancel()
         self.refresh_all()
 
     def _on_click_clear_records(self) -> None:
         self.controller.records.clear()
-        self.controller.reset()
+        self.controller.cancel()
         self.refresh_all()
 
     def _on_click_toggle_panel(self) -> None:
@@ -215,76 +222,54 @@ class CronometroOverlay:
             self.btn_panel.config(text="-")
             self.panel_expandido = True
 
-    def _on_click_modo_status(self) -> None:
-        if self.auto_mode or self.on_manual_path_selected is None:
-            return
-
-        selected_file = filedialog.askopenfilename(
-            title="Zarokh: Select your Client.txt to enable Auto Mode",
-            filetypes=[("Text Files", "Client.txt"), ("All Files", "*.*")],
-        )
-        if selected_file:
-            self.on_manual_path_selected(selected_file)
-            self.set_auto_mode(True)
-
     # ------------------------------------------------------------------
     # Called from LogWatcher, via root.after (see __main__.py)
     # ------------------------------------------------------------------
 
     def handle_log_event(self, event_name: str) -> None:
-        was_running = self.controller.timer.running
         self.controller.handle_log_event(event_name)
         self.refresh_all()
-        if self.controller.timer.running and not was_running:
-            self._tick()
+        self._ensure_ticking()
 
     # ------------------------------------------------------------------
     # Rendering — reads state, never mutates it
     # ------------------------------------------------------------------
 
-    def set_auto_mode(self, enabled: bool) -> None:
-        self.auto_mode = enabled
-        self._refresh_mode_indicator()
-
-    def _refresh_mode_indicator(self) -> None:
-        if self.auto_mode:
-            self.btn_modo_status.config(
-                text="● AUTO MODE", fg="#4ade80", bg="#1a1a1a",
-                activebackground="#1a1a1a", activeforeground="#4ade80", state=tk.DISABLED,
-            )
-        else:
-            self.btn_modo_status.config(
-                text="○ MANUAL MODE (Click to link PoE2)", fg="#a3a3a3", bg="#1a1a1a",
-                activebackground="#1a1a1a", activeforeground="white", state=tk.NORMAL,
-            )
-
     def refresh_all(self) -> None:
-        timer = self.controller.timer
+        run = self.controller.run
 
-        self.btn_toggle.config(text="Pause" if timer.running else "Start")
-        self.btn_floor.config(state=tk.NORMAL if timer.running and not timer.is_finished else tk.DISABLED)
+        controls_enabled = run.state == RunState.RUNNING
+        self.btn_pause_restart.config(state=tk.NORMAL if controls_enabled else tk.DISABLED)
+        self.btn_cancel.config(state=tk.NORMAL if controls_enabled else tk.DISABLED)
 
-        self.label_tiempo.config(text=format_time(timer.elapsed_time()), fg="#e5c17b")
+        if run.is_paused:
+            self.btn_pause_restart.config(text="▶")
+            self._pause_tooltip.update_text("Restart")
+        else:
+            self.btn_pause_restart.config(text="⏸")
+            self._pause_tooltip.update_text("Pause")
+
+        self.label_tiempo.config(text=format_time(run.total_timer.elapsed_time()), fg="#e5c17b")
         self._refresh_delta_label()
         self._refresh_records_panel()
-        self._refresh_mode_indicator()
 
     def _refresh_delta_label(self) -> None:
-        timer = self.controller.timer
-        if timer.is_finished:
+        run = self.controller.run
+
+        if run.current_floor > TOTAL_FLOORS:
             self.label_delta_live.config(text="Run Completed!", fg="#e5c17b")
             return
 
         best_time = self.controller.best_time_for_current_floor()
         if best_time is None:
             self.label_delta_live.config(
-                text=f"Floor {timer.current_floor} | Best: First Run", fg="#888888",
+                text=f"Floor {run.current_floor} | Best: First Run", fg="#888888",
             )
             return
 
-        if not timer.running:
+        if run.state != RunState.RUNNING or run.is_paused:
             self.label_delta_live.config(
-                text=f"Floor {timer.current_floor} | Best: {format_time(best_time)}", fg="#888888",
+                text=f"Floor {run.current_floor} | Best: {format_time(best_time)}", fg="#888888",
             )
             self.label_tiempo.config(fg="#e5c17b")
             return
@@ -293,7 +278,7 @@ class CronometroOverlay:
         sign = "-" if delta < 0 else "+"
         color = "#4ade80" if delta < 0 else "#f87171"
         self.label_delta_live.config(
-            text=f"Floor {timer.current_floor} | {sign}{abs(delta):.1f}s", fg=color,
+            text=f"Floor {run.current_floor} | {sign}{abs(delta):.1f}s", fg=color,
         )
         self.label_tiempo.config(fg=color)
 
@@ -305,10 +290,23 @@ class CronometroOverlay:
         total = records.best_total_time()
         self.lbl_total_val.config(text=format_time(total) if total else "--:--.--")
 
-    def _tick(self) -> None:
-        if not self.controller.timer.running:
+    def _ensure_ticking(self) -> None:
+        """Starts the refresh loop if it isn't already running and the
+        run is actively counting (not idle, not paused). Safe to call
+        redundantly — won't spawn duplicate loops."""
+        if self._ticking:
             return
-        self.label_tiempo.config(text=format_time(self.controller.timer.elapsed_time()))
+        run = self.controller.run
+        if run.state == RunState.RUNNING and not run.is_paused:
+            self._ticking = True
+            self._tick()
+
+    def _tick(self) -> None:
+        run = self.controller.run
+        if run.state != RunState.RUNNING or run.is_paused:
+            self._ticking = False
+            return
+        self.label_tiempo.config(text=format_time(run.total_timer.elapsed_time()))
         self._refresh_delta_label()
         self.root.after(50, self._tick)
 

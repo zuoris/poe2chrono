@@ -1,67 +1,85 @@
 from zarokh.app_controller import AppController
 from zarokh.records import RecordsManager
-from zarokh.timer import RunTimer
+from zarokh.run import Run, RunState
 
 
 def make_controller(tmp_path):
-    timer = RunTimer()
+    run = Run()
     records = RecordsManager(records_path=tmp_path / "records.json")
-    return AppController(timer=timer, records=records), timer, records
+    return AppController(run=run, records=records), run, records
 
 
-def test_start_event_resumes_without_resetting(tmp_path):
-    controller, timer, _ = make_controller(tmp_path)
-    timer.current_floor = 3  # simulate a run in progress, timer paused
-
+def test_start_event_starts_a_fresh_run(tmp_path):
+    controller, run, _ = make_controller(tmp_path)
     controller.handle_log_event("START")
-
-    assert timer.current_floor == 3  # untouched
-    assert timer.running is True
+    assert run.state == RunState.RUNNING
+    assert run.current_floor == 1
 
 
 def test_start_event_ignored_when_already_running(tmp_path):
-    controller, timer, _ = make_controller(tmp_path)
-    timer.start()
-    timer.current_floor = 2
+    controller, run, _ = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    controller.handle_log_event("FLOOR_2")
 
     controller.handle_log_event("START")
 
-    assert timer.current_floor == 2  # untouched
-    assert timer.running is True
+    assert run.current_floor == 2  # untouched
 
 
-def test_floor_2_event_registers_floor_when_on_floor_1(tmp_path):
-    controller, timer, records = make_controller(tmp_path)
+def test_start_event_starts_fresh_after_previous_run_finished(tmp_path):
+    controller, run, _ = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    for event in ["FLOOR_2", "FLOOR_3", "FLOOR_4", "END"]:
+        controller.handle_log_event(event)
+    assert run.state == RunState.IDLE
+
+    controller.handle_log_event("START")
+
+    assert run.state == RunState.RUNNING
+    assert run.current_floor == 1
+
+
+def test_start_event_starts_fresh_after_cancel(tmp_path):
+    controller, run, _ = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    controller.handle_log_event("FLOOR_2")
+    controller.cancel()
+
+    controller.handle_log_event("START")
+
+    assert run.state == RunState.RUNNING
+    assert run.current_floor == 1
+
+
+def test_floor_event_registers_floor_when_running(tmp_path):
+    controller, run, records = make_controller(tmp_path)
     controller.handle_log_event("START")
 
     update = controller.handle_log_event("FLOOR_2")
 
     assert update is not None
-    assert update.floor_result.floor_number == 1
-    assert timer.current_floor == 2
+    assert records.best_floor_time(1) is not None
+    assert run.current_floor == 2
 
 
-def test_floor_3_event_ignored_when_still_on_floor_1(tmp_path):
-    controller, timer, _ = make_controller(tmp_path)
+def test_floor_event_ignored_when_out_of_order(tmp_path):
+    controller, run, _ = make_controller(tmp_path)
     controller.handle_log_event("START")
 
-    update = controller.handle_log_event("FLOOR_3")  # out of order, skipped FLOOR_2
+    update = controller.handle_log_event("FLOOR_3")
 
     assert update is None
-    assert timer.current_floor == 1  # nothing changed
+    assert run.current_floor == 1
 
 
-def test_register_floor_updates_records_when_new_best(tmp_path):
-    controller, timer, records = make_controller(tmp_path)
-    controller.handle_log_event("START")
-
-    controller.handle_log_event("FLOOR_2")
-
-    assert records.best_floor_time(1) is not None
+def test_floor_event_ignored_when_idle(tmp_path):
+    controller, run, _ = make_controller(tmp_path)
+    update = controller.handle_log_event("FLOOR_2")
+    assert update is None
 
 
-def test_end_event_finishes_run_and_updates_total_record(tmp_path):
-    controller, timer, records = make_controller(tmp_path)
+def test_end_event_finishes_run_and_saves_total_record(tmp_path):
+    controller, run, records = make_controller(tmp_path)
     controller.handle_log_event("START")
     controller.handle_log_event("FLOOR_2")
     controller.handle_log_event("FLOOR_3")
@@ -71,13 +89,28 @@ def test_end_event_finishes_run_and_updates_total_record(tmp_path):
 
     assert update.is_run_finished is True
     assert records.best_total_time() is not None
+    assert run.state == RunState.IDLE
 
 
-def test_manual_register_floor_works_without_log_events(tmp_path):
-    controller, timer, records = make_controller(tmp_path)
-    controller.toggle()  # manual start, no log watcher involved
+def test_floor_event_while_paused_cancels_run_without_saving(tmp_path):
+    controller, run, records = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    controller.toggle_pause()  # paused before completing floor 1
 
-    update = controller.register_floor()
+    update = controller.handle_log_event("FLOOR_2")
 
-    assert update is not None
-    assert records.best_floor_time(1) is not None
+    assert update is None
+    assert records.best_floor_time(1) is None
+    assert run.state == RunState.IDLE
+
+
+def test_cancel_discards_run_without_saving_records(tmp_path):
+    controller, run, records = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    controller.handle_log_event("FLOOR_2")  # floor 1 saved
+
+    controller.cancel()
+
+    assert run.state == RunState.IDLE
+    assert records.best_floor_time(1) is not None  # already-saved floor stays
+    assert records.best_total_time() is None  # total never got saved

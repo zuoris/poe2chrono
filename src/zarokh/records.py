@@ -6,7 +6,7 @@ import json
 import logging
 from pathlib import Path
 
-from zarokh.timer import TOTAL_FLOORS
+from zarokh.run import TOTAL_FLOORS
 
 logger = logging.getLogger(__name__)
 
