@@ -69,3 +69,6 @@ starts), both clocks show `00:00.00`, consistent with the existing
 - 2026-07-14: Proposed.
 - 2026-07-14: Designed — layout, sizing, and color rules defined
   based on refined requirements; all prior open questions resolved.
+- 2026-07-14: Implemented. Window sizing switched from hand-tuned
+  pixel constants to computed sizing (winfo_reqheight), fixing a
+  recurring visual glitch every time panel content changed.

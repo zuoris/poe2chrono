@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Versions prior to 1.0.14 were not documented in this file.
 
+## [1.0.16] - 2026-07-14
+
+### Added
+- Detailed time display: global clock with total-time delta, and a
+  separate (smaller) floor clock with its own delta against the
+  floor record. Deltas show in green/red depending on sign, or "--"
+  when there's nothing to compare yet.
+- Minimal "Floor N" indicator showing the currently tracked floor.
+- Small clickable "by Zuo" credit link to the project repository.
+
+### Fixed
+- Close button could be visually covered by other widgets.
+- The records panel window height was hand-tuned and drifted out of
+  sync whenever its content changed, leaving a mismatched-color gap
+  at the bottom. The window now sizes itself to its actual content.
+
 ## [1.0.15] - 2026-07-14
 
 ### Changed
