@@ -4,9 +4,10 @@ handles widgets and rendering — all state and business logic lives
 in AppController, Run, and RecordsManager.
 """
 import logging
+from pathlib import Path
 import sys
 import tkinter as tk
-from pathlib import Path
+import webbrowser
 
 from zarokh.app_controller import AppController
 from zarokh.run import TOTAL_FLOORS, RunState
@@ -212,6 +213,13 @@ class CronometroOverlay:
 
         self.btn_cerrar.lift()
 
+        self.label_credit = tk.Label(
+            self.root, text="by Zuo", font=("Arial", 7), fg="#555555", bg="#1a1a1a",
+            cursor="hand2",
+        )
+        self.label_credit.pack(pady=(2, 4))
+        self.label_credit.bind("<Button-1>", self._on_click_credit)
+
     def _bind_drag_events(self) -> None:
         for widget in [self.root, self.label_tiempo, self.label_floor_tiempo]:
             widget.bind("<ButtonPress-1>", self._start_drag)
@@ -247,6 +255,9 @@ class CronometroOverlay:
             self.root.geometry(f"{self.ancho}x{self.alto_expandido}")
             self.btn_panel.config(text="-")
             self.panel_expandido = True
+
+    def _on_click_credit(self, event: tk.Event) -> None:
+        webbrowser.open("https://github.com/zuoris/poe2chrono")
 
     # ------------------------------------------------------------------
     # Called from LogWatcher, via root.after (see __main__.py)
