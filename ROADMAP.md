@@ -24,8 +24,9 @@ further thought and isn't blocking the items above.
 | Priority | # | Feature | Status |
 |----------|---|---------|--------|
 | 1 | 002 | [Simplified auto-mode UI](docs/roadmap/002-simplified-auto-mode-ui.md) | Done |
-| 2 | 003 | [Detailed time and delta display](docs/roadmap/003-detailed-time-display.md) | Proposed |
+| 2 | 003 | [Detailed time and delta display](docs/roadmap/003-detailed-time-display.md) | Designed |
 | 3 | 004 | [Full run history](docs/roadmap/004-full-run-history.md) | Proposed |
 | 4 | 001 | [Run attempt counter](docs/roadmap/001-run-attempt-counter.md) | Proposed |
 | 5 | 005 | [Unique relic tracking per run](docs/roadmap/005-unique-relic-tracking.md) | Proposed |
 | — | 006 | [Abandoned and interrupted runs](docs/roadmap/006-abandoned-interrupted-runs.md) | Proposed |
+| — | 007 | [Persist application state across executions](docs/roadmap/007-persist-app-state.md) | Proposed |
