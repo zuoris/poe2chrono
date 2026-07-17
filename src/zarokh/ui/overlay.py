@@ -114,17 +114,41 @@ class CronometroOverlay:
         )
         self.btn_cerrar.place(x=222, y=2)
 
+        frame_total = tk.Frame(self.root, bg="#1a1a1a")
+        frame_total.pack(pady=(8, 0))
+
         self.label_tiempo = tk.Label(
-            self.root, text="00:00.00", font=("Consolas", 26, "bold"),
+            frame_total, text="00:00.00", font=("Consolas", 26, "bold"),
             fg="#e5c17b", bg="#1a1a1a",
         )
-        self.label_tiempo.pack(pady=(8, 0))
+        self.label_tiempo.pack(side=tk.LEFT)
 
-        self.label_delta_live = tk.Label(
-            self.root, text="Waiting for Sekhemas...", font=("Consolas", 10),
+        self.label_total_delta = tk.Label(
+            frame_total, text="--", font=("Consolas", 10, "bold"),
             fg="#888888", bg="#1a1a1a",
         )
-        self.label_delta_live.pack(pady=(0, 5))
+        self.label_total_delta.pack(side=tk.LEFT, padx=(6, 0), pady=(10, 0), anchor="n")
+
+        frame_floor = tk.Frame(self.root, bg="#1a1a1a")
+        frame_floor.pack(pady=(0, 5))
+
+        self.label_floor_indicator = tk.Label(
+            frame_floor, text="Floor 1", font=("Consolas", 9, "bold"),
+            fg="#777777", bg="#1a1a1a",
+        )
+        self.label_floor_indicator.pack(side=tk.LEFT, padx=(0, 4))
+
+        self.label_floor_tiempo = tk.Label(
+            frame_floor, text="00:00.00", font=("Consolas", 14, "bold"),
+            fg="#e5c17b", bg="#1a1a1a",
+        )
+        self.label_floor_tiempo.pack(side=tk.LEFT)
+
+        self.label_floor_delta = tk.Label(
+            frame_floor, text="--", font=("Consolas", 10, "bold"),
+            fg="#888888", bg="#1a1a1a",
+        )
+        self.label_floor_delta.pack(side=tk.LEFT, padx=(6, 0))
 
         frame_botones = tk.Frame(self.root, bg="#1a1a1a")
         frame_botones.pack(pady=2)
@@ -186,8 +210,10 @@ class CronometroOverlay:
         )
         self.btn_clear_records.pack(fill=tk.X, padx=15, pady=(10, 5))
 
+        self.btn_cerrar.lift()
+
     def _bind_drag_events(self) -> None:
-        for widget in [self.root, self.label_tiempo, self.label_delta_live]:
+        for widget in [self.root, self.label_tiempo, self.label_floor_tiempo]:
             widget.bind("<ButtonPress-1>", self._start_drag)
             widget.bind("<B1-Motion>", self._on_drag)
         self.root.bind("<Escape>", lambda e: self.root.destroy())
@@ -249,38 +275,26 @@ class CronometroOverlay:
             self.btn_pause_restart.config(text="⏸")
             self._pause_tooltip.update_text("Pause")
 
-        self.label_tiempo.config(text=format_time(run.total_timer.elapsed_time()), fg="#e5c17b")
-        self._refresh_delta_label()
+        self._refresh_time_display()
         self._refresh_records_panel()
 
-    def _refresh_delta_label(self) -> None:
+    def _refresh_time_display(self) -> None:
         run = self.controller.run
 
-        if run.current_floor > TOTAL_FLOORS:
-            self.label_delta_live.config(text="Run Completed!", fg="#e5c17b")
-            return
+        self.label_tiempo.config(text=format_time(run.total_timer.elapsed_time()))
+        self._render_delta(self.label_total_delta, self.controller.total_delta())
 
-        best_time = self.controller.best_time_for_current_floor()
-        if best_time is None:
-            self.label_delta_live.config(
-                text=f"Floor {run.current_floor} | Best: First Run", fg="#888888",
-            )
-            return
+        self.label_floor_indicator.config(text=f"Floor {self.controller.display_floor_number()}")
+        self.label_floor_tiempo.config(text=format_time(run.floor_timer.elapsed_time()))
+        self._render_delta(self.label_floor_delta, self.controller.floor_delta())
 
-        if run.state != RunState.RUNNING or run.is_paused:
-            self.label_delta_live.config(
-                text=f"Floor {run.current_floor} | Best: {format_time(best_time)}", fg="#888888",
-            )
-            self.label_tiempo.config(fg="#e5c17b")
+    def _render_delta(self, label: tk.Label, delta: float | None) -> None:
+        if delta is None:
+            label.config(text="--", fg="#888888")
             return
-
-        delta = self.controller.current_delta()
         sign = "-" if delta < 0 else "+"
         color = "#4ade80" if delta < 0 else "#f87171"
-        self.label_delta_live.config(
-            text=f"Floor {run.current_floor} | {sign}{abs(delta):.1f}s", fg=color,
-        )
-        self.label_tiempo.config(fg=color)
+        label.config(text=f"{sign}{abs(delta):.1f}s", fg=color)
 
     def _refresh_records_panel(self) -> None:
         records = self.controller.records
@@ -291,9 +305,6 @@ class CronometroOverlay:
         self.lbl_total_val.config(text=format_time(total) if total else "--:--.--")
 
     def _ensure_ticking(self) -> None:
-        """Starts the refresh loop if it isn't already running and the
-        run is actively counting (not idle, not paused). Safe to call
-        redundantly — won't spawn duplicate loops."""
         if self._ticking:
             return
         run = self.controller.run
@@ -306,8 +317,7 @@ class CronometroOverlay:
         if run.state != RunState.RUNNING or run.is_paused:
             self._ticking = False
             return
-        self.label_tiempo.config(text=format_time(run.total_timer.elapsed_time()))
-        self._refresh_delta_label()
+        self._refresh_time_display()
         self.root.after(50, self._tick)
 
     # ------------------------------------------------------------------

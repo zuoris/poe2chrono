@@ -43,11 +43,35 @@ class AppController:
             return None
         return self.records.best_floor_time(self.run.current_floor)
 
-    def current_delta(self) -> float | None:
-        best_time = self.best_time_for_current_floor()
-        if best_time is None:
+    def display_floor_number(self) -> int:
+        """The floor number to show on screen — clamped to
+        TOTAL_FLOORS so the last floor's frozen time/delta stays
+        visible after the run finishes, instead of pointing at a
+        nonexistent floor 5."""
+        return min(self.run.current_floor, TOTAL_FLOORS)
+
+    def total_delta(self) -> float | None:
+        """Delta of the global clock against the best total time.
+        None if there's no record yet, or if no run has ever started
+        (elapsed time still at zero) — showing a delta against an
+        untouched 00:00.00 clock would be misleading."""
+        if self.run.state != RunState.RUNNING and self.run.total_timer.elapsed_time() == 0:
             return None
-        return self.run.floor_timer.elapsed_time() - best_time
+        best = self.records.best_total_time()
+        if best is None:
+            return None
+        return self.run.total_timer.elapsed_time() - best
+
+    def floor_delta(self) -> float | None:
+        """Delta of the floor clock against the best time for the
+        displayed floor. Same "nothing to compare yet" guard as
+        total_delta()."""
+        if self.run.state != RunState.RUNNING and self.run.floor_timer.elapsed_time() == 0:
+            return None
+        best = self.records.best_floor_time(self.display_floor_number())
+        if best is None:
+            return None
+        return self.run.floor_timer.elapsed_time() - best
 
     def register_floor(self) -> FloorUpdate | None:
         best_time = self.best_time_for_current_floor()

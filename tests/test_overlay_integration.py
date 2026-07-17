@@ -51,14 +51,14 @@ def test_pause_restart_button_icon_and_tooltip_toggle(overlay):
     assert overlay.btn_pause_restart.cget("text") == "⏸"
 
 
-def test_completed_run_shows_message_and_disables_buttons(overlay):
+def test_completed_run_shows_frozen_floor_4_and_disables_buttons(overlay):
     overlay.handle_log_event("START")
     overlay.handle_log_event("FLOOR_2")
     overlay.handle_log_event("FLOOR_3")
     overlay.handle_log_event("FLOOR_4")
     overlay.handle_log_event("END")
 
-    assert overlay.label_delta_live.cget("text") == "Run Completed!"
+    assert overlay.label_floor_indicator.cget("text") == "F4"
     assert str(overlay.btn_pause_restart["state"]) == "disabled"
 
 
