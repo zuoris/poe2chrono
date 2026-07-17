@@ -251,7 +251,7 @@ class CronometroOverlay:
             self.btn_panel.config(text="+")
             self.panel_expandido = False
         else:
-            self.frame_floors.pack(fill=tk.BOTH, expand=True, pady=(5, 10))
+            self.frame_floors.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
             self.root.geometry(f"{self.ancho}x{self.alto_expandido}")
             self.btn_panel.config(text="-")
             self.panel_expandido = True

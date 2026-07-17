@@ -58,7 +58,7 @@ def test_completed_run_shows_frozen_floor_4_and_disables_buttons(overlay):
     overlay.handle_log_event("FLOOR_4")
     overlay.handle_log_event("END")
 
-    assert overlay.label_floor_indicator.cget("text") == "F4"
+    assert overlay.label_floor_indicator.cget("text") == "Floor 4"
     assert str(overlay.btn_pause_restart["state"]) == "disabled"
 
 
