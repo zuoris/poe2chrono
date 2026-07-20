@@ -18,7 +18,7 @@ from zarokh.ui.overlay import CronometroOverlay
 @pytest.fixture
 def overlay(tmp_path):
     run = Run()
-    records = RecordsManager(records_path=tmp_path / "records.json")
+    records = RecordsManager(data_path=tmp_path / "records.json")
     controller = AppController(run=run, records=records)
 
     root = tk.Tk()

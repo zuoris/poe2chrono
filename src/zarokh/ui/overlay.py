@@ -11,6 +11,7 @@ import webbrowser
 
 from zarokh.app_controller import AppController
 from zarokh.run import TOTAL_FLOORS, RunState
+from zarokh.ui.history_window import HistoryWindow
 from zarokh.windows_utils import (
     force_taskbar_icon,
     get_window_handle,
@@ -72,7 +73,7 @@ class CronometroOverlay:
 
         self.ancho = 240
         self.alto_compacto = 135
-        self.alto_expandido = 305
+        self.alto_expandido = 360
         self.root.geometry(f"{self.ancho}x{self.alto_compacto}+100+100")
         self.root.configure(bg="#1a1a1a")
 
@@ -211,6 +212,12 @@ class CronometroOverlay:
         )
         self.btn_clear_records.pack(fill=tk.X, padx=15, pady=(10, 5))
 
+        self.btn_history = tk.Button(
+            self.frame_floors, text="View History", command=self._on_click_view_history,
+            bg="#2a2a2a", fg="#e5c17b", relief="flat", font=("Arial", 9, "bold"),
+        )
+        self.btn_history.pack(fill=tk.X, padx=15, pady=(5, 0))
+
         self.btn_cerrar.lift()
 
         self.label_credit = tk.Label(
@@ -258,6 +265,9 @@ class CronometroOverlay:
 
     def _on_click_credit(self, event: tk.Event) -> None:
         webbrowser.open("https://github.com/zuoris/poe2chrono")
+
+    def _on_click_view_history(self) -> None:
+        HistoryWindow(self.root, self.controller.records)
 
     # ------------------------------------------------------------------
     # Called from LogWatcher, via root.after (see __main__.py)

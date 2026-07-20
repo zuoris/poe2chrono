@@ -1,3 +1,5 @@
+import pytest
+
 from zarokh.app_controller import AppController
 from zarokh.records import RecordsManager
 from zarokh.run import Run, RunState
@@ -5,7 +7,7 @@ from zarokh.run import Run, RunState
 
 def make_controller(tmp_path):
     run = Run()
-    records = RecordsManager(records_path=tmp_path / "records.json")
+    records = RecordsManager(data_path=tmp_path / "records.json")
     return AppController(run=run, records=records), run, records
 
 
@@ -114,3 +116,26 @@ def test_cancel_discards_run_without_saving_records(tmp_path):
     assert run.state == RunState.IDLE
     assert records.best_floor_time(1) is not None  # already-saved floor stays
     assert records.best_total_time() is None  # total never got saved
+
+def test_finishing_a_run_adds_it_to_history(tmp_path):
+    controller, run, records = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    for event in ["FLOOR_2", "FLOOR_3", "FLOOR_4", "END"]:
+        controller.handle_log_event(event)
+
+    runs = records.list_runs()
+    assert len(runs) == 1
+    assert runs[0]["total_time"] is not None
+    assert len(runs[0]["floor_times"]) == 4
+
+
+def test_cancelling_a_run_adds_it_to_history_with_null_total(tmp_path):
+    controller, run, records = make_controller(tmp_path)
+    controller.handle_log_event("START")
+    controller.handle_log_event("FLOOR_2")
+    controller.cancel()
+
+    runs = records.list_runs()
+    assert len(runs) == 1
+    assert runs[0]["total_time"] is None
+    assert runs[0]["floor_times"] == [pytest.approx(runs[0]["floor_times"][0], abs=0.05)]

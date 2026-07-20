@@ -32,6 +32,7 @@ zarokh.log*
 logs/
 
 # local records
+zarokh_data.json
 zarokh_records.json
 zarokh_config.json
 

@@ -31,12 +31,20 @@ class AppController:
     def __init__(self, run: Run, records: RecordsManager):
         self.run = run
         self.records = records
+        self._current_run_floor_times: list[float] = []
 
     def toggle_pause(self) -> None:
         self.run.toggle_pause()
 
     def cancel(self) -> None:
+        was_running = self.run.state == RunState.RUNNING
         self.run.cancel()
+        if was_running:
+            self._finalize_current_run(total_time=None)
+
+    def _finalize_current_run(self, total_time: float | None) -> None:
+        self.records.add_run(list(self._current_run_floor_times), total_time)
+        self._current_run_floor_times = []
 
     def best_time_for_current_floor(self) -> float | None:
         if self.run.current_floor > TOTAL_FLOORS:
@@ -80,10 +88,12 @@ class AppController:
             return None
 
         self.records.update_floor_time(result.floor_number, result.floor_time)
+        self._current_run_floor_times.append(result.floor_time)
 
         is_run_finished = self.run.current_floor > TOTAL_FLOORS
         if is_run_finished:
             self.records.update_total_time(result.cumulative_time)
+            self._finalize_current_run(total_time=result.cumulative_time)
 
         return FloorUpdate(
             floor_result=result,
@@ -95,6 +105,7 @@ class AppController:
         if event_name == "START":
             if self.run.state == RunState.IDLE:
                 self.run.start()
+                self._current_run_floor_times = []
             else:
                 logger.info("Ignoring START event: run already in progress")
             return None
@@ -121,6 +132,7 @@ class AppController:
                 "cancelling this run without saving records."
             )
             self.run.cancel()
+            self._finalize_current_run(total_time=None)
             return None
 
         return self.register_floor()
