@@ -12,11 +12,17 @@ from typing import Callable
 logger = logging.getLogger(__name__)
 
 TRIGGERS = {
-    "START": 'area "Sanctum_1_Foyer',
-    "FLOOR_2": 'area "Sanctum_2_Foyer',
-    "FLOOR_3": 'area "Sanctum_3_Foyer',
-    "FLOOR_4": 'area "Sanctum_4_Foyer',
-    "END": 'Zarokh, the Temporal: Ugh...',
+    "START": ['area "Sanctum_1_Foyer'],
+    "FLOOR_2": ['area "Sanctum_2_Foyer'],
+    "FLOOR_3": ['area "Sanctum_3_Foyer'],
+    "FLOOR_4": ['area "Sanctum_4_Foyer'],
+    "END": [
+        'Zarokh, the Temporal: The sands shift, Taljari...',
+        'Zarokh, the Temporal: This cannot be... it is not my time...',
+        'Zarokh, the Temporal: My sand... runs out...',
+        'Zarokh, the Temporal: Ugh... who are you to overthrow your fate?',
+        'Zarokh, the Temporal: Ugh, this is not the future I had forseen!',
+    ],
 }
 
 
@@ -74,7 +80,8 @@ def match_trigger(line: str) -> str | None:
     no trigger matches. Pulled out as a standalone function so it
     can be tested without threads or real files.
     """
-    for event_name, trigger_text in TRIGGERS.items():
-        if trigger_text in line:
-            return event_name
+    for event_name, trigger_texts in TRIGGERS.items():
+        for trigger_text in trigger_texts:
+            if trigger_text in line:
+                return event_name
     return None
