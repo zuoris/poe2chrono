@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Versions prior to 1.0.14 were not documented in this file.
 
+## [1.0.17] - 2026-07-14
+
+### Added
+- Full run history window: a pinned personal-best row plus a
+  scrollable list of past runs (completed or cancelled), most recent
+  first, with the attempt number as the first column.
+- "View History" button in the hidden records panel.
+
+### Changed
+- Persistence file renamed from zarokh_records.json to
+  zarokh_data.json to also store run history. Existing users' data
+  is migrated automatically on first launch after updating.
+
+### Fixed
+- The end-of-run trigger only matched one specific line, which never
+  actually appeared in the game's log — Zarokh, the Temporal has
+  five different possible death lines, and finishing a run wasn't
+  being reliably detected. All five are now matched.
+
 ## [1.0.16] - 2026-07-14
 
 ### Added

@@ -93,3 +93,8 @@ this item ships with every floor time in a single neutral color.
   cancelled runs, attempt numbering resolving item 001, storage
   structure in zarokh_data.json, non-topmost window). Color coding
   split off into item 008 and deferred.
+- 2026-07-21: Implemented. Storage migrated to zarokh_data.json with
+  automatic migration from zarokh_records.json for existing users.
+  History window styled to match the main overlay (borderless, same
+  close button, draggable, forced taskbar visibility). Color coding
+  (item 008) shipped as neutral/placeholder, as planned.
