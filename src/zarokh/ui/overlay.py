@@ -12,6 +12,7 @@ import webbrowser
 from zarokh.app_controller import AppController
 from zarokh.run import TOTAL_FLOORS, RunState
 from zarokh.ui.history_window import HistoryWindow
+from zarokh.ui.tooltip import Tooltip
 from zarokh.windows_utils import (
     force_taskbar_icon,
     get_window_handle,
@@ -25,38 +26,6 @@ logger = logging.getLogger(__name__)
 def format_time(seconds: float) -> str:
     """Formats a duration in seconds as MM:SS.CC."""
     return f"{int(seconds // 60):02d}:{int(seconds % 60):02d}.{int((seconds % 1) * 100):02d}"
-
-
-class _Tooltip:
-    """Minimal hover tooltip — Tkinter has no built-in equivalent."""
-
-    def __init__(self, widget: tk.Widget, text: str) -> None:
-        self.widget = widget
-        self.text = text
-        self._tipwindow: tk.Toplevel | None = None
-        widget.bind("<Enter>", self._show)
-        widget.bind("<Leave>", self._hide)
-
-    def update_text(self, text: str) -> None:
-        self.text = text
-
-    def _show(self, event: tk.Event | None = None) -> None:
-        if self._tipwindow is not None:
-            return
-        x = self.widget.winfo_rootx() + 10
-        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
-        self._tipwindow = tk.Toplevel(self.widget)
-        self._tipwindow.wm_overrideredirect(True)
-        self._tipwindow.wm_geometry(f"+{x}+{y}")
-        tk.Label(
-            self._tipwindow, text=self.text, background="#222222", foreground="white",
-            relief="solid", borderwidth=1, font=("Arial", 8), padx=4, pady=2,
-        ).pack()
-
-    def _hide(self, event: tk.Event | None = None) -> None:
-        if self._tipwindow is not None:
-            self._tipwindow.destroy()
-            self._tipwindow = None
 
 
 class CronometroOverlay:
@@ -161,7 +130,7 @@ class CronometroOverlay:
             font=("Arial", 11), state=tk.DISABLED,
         )
         self.btn_pause_restart.pack(side=tk.LEFT, padx=4)
-        self._pause_tooltip = _Tooltip(self.btn_pause_restart, "Pause")
+        self._pause_tooltip = Tooltip(self.btn_pause_restart, "Pause")
 
         self.btn_cancel = tk.Button(
             frame_botones, text="✕", command=self._on_click_cancel,
@@ -169,7 +138,7 @@ class CronometroOverlay:
             font=("Arial", 11), state=tk.DISABLED,
         )
         self.btn_cancel.pack(side=tk.LEFT, padx=4)
-        _Tooltip(self.btn_cancel, "Cancel")
+        Tooltip(self.btn_cancel, "Cancel")
 
         self.btn_panel = tk.Button(
             frame_botones, text="+", command=self._on_click_toggle_panel,

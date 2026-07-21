@@ -105,3 +105,69 @@ def test_migrates_legacy_records_file(tmp_path):
     records = RecordsManager(data_path=tmp_path / "zarokh_data.json")
     assert records.best_floor_time(1) == 40.0
     assert records.list_runs() == []
+
+def test_add_run_initializes_relics_only_when_completed(tmp_path):
+    records = RecordsManager(data_path=tmp_path / "data.json")
+    completed = records.add_run([10.0, 12.0, 11.0, 13.0], 46.0)
+    cancelled = records.add_run([10.0], None)
+
+    completed_run = records._find_run(completed)
+    cancelled_run = records._find_run(cancelled)
+
+    assert "relics" in completed_run
+    assert all(count == 0 for count in completed_run["relics"].values())
+    assert "relics" not in cancelled_run
+
+
+def test_adjust_relic_count_increments_and_decrements(tmp_path):
+    records = RecordsManager(data_path=tmp_path / "data.json")
+    attempt = records.add_run([10.0, 12.0, 11.0, 13.0], 46.0)
+
+    new_count = records.adjust_relic_count(attempt, "The Last Flame", 1)
+    assert new_count == 1
+
+    new_count = records.adjust_relic_count(attempt, "The Last Flame", -1)
+    assert new_count == 0
+
+
+def test_adjust_relic_count_never_goes_below_zero(tmp_path):
+    records = RecordsManager(data_path=tmp_path / "data.json")
+    attempt = records.add_run([10.0, 12.0, 11.0, 13.0], 46.0)
+
+    new_count = records.adjust_relic_count(attempt, "The Last Flame", -1)
+    assert new_count == 0
+
+
+def test_adjust_relic_count_returns_none_for_cancelled_run(tmp_path):
+    records = RecordsManager(data_path=tmp_path / "data.json")
+    attempt = records.add_run([10.0], None)
+
+    assert records.adjust_relic_count(attempt, "The Last Flame", 1) is None
+
+
+def test_relic_totals_sums_across_completed_runs_only(tmp_path):
+    records = RecordsManager(data_path=tmp_path / "data.json")
+    a1 = records.add_run([10.0, 12.0, 11.0, 13.0], 46.0)
+    a2 = records.add_run([9.0, 12.0, 11.0, 13.0], 45.0)
+    records.add_run([10.0], None)  # cancelled, shouldn't count
+
+    records.adjust_relic_count(a1, "The Last Flame", 1)
+    records.adjust_relic_count(a2, "The Last Flame", 2)
+
+    totals = records.relic_totals()
+    assert totals["The Last Flame"] == 3
+    assert totals["The Desperate Alliance"] == 0
+
+def test_backfills_relics_for_old_completed_runs_missing_the_field(tmp_path):
+    data_path = tmp_path / "data.json"
+    data_path.write_text(
+        '{"records": {"floors": [null, null, null, null], "total": null}, '
+        '"runs": [{"attempt": 1, "floor_times": [10.0, 12.0, 11.0, 13.0], "total_time": 46.0}]}',
+        encoding="utf-8",
+    )
+
+    records = RecordsManager(data_path=data_path)
+
+    run = records._find_run(1)
+    assert "relics" in run
+    assert all(count == 0 for count in run["relics"].values())
