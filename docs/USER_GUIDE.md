@@ -5,6 +5,8 @@ instructions, see the main [README](../README.md).
 
 ## The main window
 
+![Zarokh's main window in its initial, collapsed state](images/collapsed.png)
+
 A small, borderless, always-on-top window you can drag anywhere on
 screen by clicking and holding it.
 
@@ -36,6 +38,8 @@ same as pressing Cancel yourself.
 
 ### The "+" panel
 
+![The expanded panel, showing a personal best time](images/expanded.png)
+
 Click **+** to expand a hidden panel below the controls:
 
 - Your best time for each floor and your best total time.
@@ -47,6 +51,9 @@ Click **+** to expand a hidden panel below the controls:
   GitHub page.
 
 ## The run history window
+
+![Run history with two abandoned runs and two completed runs, including relic counts](images/history.png)
+
 
 Opened via **View History**. Unlike the main window, this one is a
 normal window — it can go behind other windows, and it shows up in

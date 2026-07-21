@@ -57,13 +57,13 @@ name vs. a short slug) to be settled during implementation.
 ## Status log
 
 - 2026-07-14: Proposed.
-- 2026-07-14: Refined — relic names confirmed, location (history
+- 2026-07-20: Refined — relic names confirmed, location (history
   table) and editability confirmed. Interaction mechanism, totals
   placement, and storage shape still open.
-- 2026-07-14: Designed — all open questions resolved: totals row
+- 2026-07-20: Designed — all open questions resolved: totals row
   pinned above the best-times row, +/- stepper buttons, completed
   runs only, floor 0 with no ceiling.
-- 2026-07-14: Implemented. Run list rebuilt with hand-made rows
+- 2026-07-21: Implemented. Run list rebuilt with hand-made rows
   instead of Treeview to support per-cell +/- buttons. History
   window resizes to fit content. Older history entries (pre-dating
   this feature) are backfilled with zeroed relic counts on load.

@@ -13,6 +13,8 @@ completed or abandoned — including which unique relics dropped.
 | Linux | No |
 | MacOS | No |
 
+![Zarokh's main window](docs/images/collapsed.png)
+
 ## Installing
 
 Just download the latest release of `zarokh.exe` from the
