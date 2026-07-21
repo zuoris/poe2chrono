@@ -63,3 +63,7 @@ name vs. a short slug) to be settled during implementation.
 - 2026-07-14: Designed — all open questions resolved: totals row
   pinned above the best-times row, +/- stepper buttons, completed
   runs only, floor 0 with no ceiling.
+- 2026-07-14: Implemented. Run list rebuilt with hand-made rows
+  instead of Treeview to support per-cell +/- buttons. History
+  window resizes to fit content. Older history entries (pre-dating
+  this feature) are backfilled with zeroed relic counts on load.

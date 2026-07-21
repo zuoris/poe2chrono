@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Versions prior to 1.0.14 were not documented in this file.
 
+## [1.1.0] - 2026-07-14
+
+### Added
+- Unique relic tracking in the run history window: a totals row for
+  all five relics, pinned above the best-times row, and per-run
+  +/- editing for completed runs.
+
 ## [1.0.17] - 2026-07-14
 
 ### Added
