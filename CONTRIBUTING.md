@@ -102,6 +102,10 @@ Before tagging a release, add an entry to `CHANGELOG.md` under a new
 conventions. The CI pipeline verifies this entry exists and fails fast
 if it's missing.
 
+Version numbers follow [semantic versioning](https://semver.org/):
+bump the minor version for new features, the patch version for
+bug fixes only, and the major version for breaking changes.
+
 Releases are triggered by pushing a tag matching `v*` (e.g. `v1.2.0`),
 following [semantic versioning](https://semver.org/). The version number
 is derived automatically from the git tag via `setuptools_scm` — there's
