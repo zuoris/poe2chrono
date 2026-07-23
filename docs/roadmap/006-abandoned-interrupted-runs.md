@@ -33,6 +33,7 @@ better understood._
 - What happens to floor records already saved for a run that later
   gets abandoned or interrupted?
 
+
 ## Status log
 
 - 2026-07-14: Proposed, split out from item 002.

@@ -13,8 +13,6 @@ state to let the user resume where they left off.
 
 ## Proposed design
 
-- Rename `zarokh_records.json` to `zarokh_data.json`, and store all
-  persisted state there (not just best-time records).
 - On a controlled exit, prompt for confirmation before closing.
   Pressing ESC again while the confirmation is showing cancels the
   exit and returns to the app (a loop: ESC shows the prompt, ESC
@@ -27,9 +25,6 @@ state to let the user resume where they left off.
 
 ## Open questions
 
-- File migration: existing users have `zarokh_records.json` — does
-  the app rename/migrate it automatically on first launch after this
-  change, or is it a clean break?
 - What exactly counts as "resumable" state, and how does it interact
   with [002's Cancel button](002-simplified-auto-mode-ui.md) and the
   paused-floor-completion safety net — e.g. if the saved run was
